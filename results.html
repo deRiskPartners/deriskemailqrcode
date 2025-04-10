@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Compliance Therapy Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    canvas {
+      max-width: 600px;
+      max-height: 600px;
+    }
+    .nav {
+      margin-bottom: 20px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: #007bff;
+      margin: 0 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="index.html">📝 Submit Form</a> | 
+    <a href="results.html">📊 View Results</a>
+  </div>
+
+  <h2>Live Compliance Therapy Distribution</h2>
+  <canvas id="complianceChart" width="400" height="400"></canvas>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://jzxiqailbudeakztkzpc.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6eGlxYWlsYnVkZWFrenRrenBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyMjk0NTcsImV4cCI6MjA1OTgwNTQ1N30.zT5Rst78LcU9A3q29VhQsYV7jiogxcH0m0aUwW7zF2M";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const ctx = document.getElementById("complianceChart").getContext("2d");
+    let chart;
+
+    async function loadDataAndUpdateChart() {
+      const { data, error } = await supabase.from("submissions").select("therapy");
+
+      if (error) {
+        console.error("Fetch error:", error);
+        return;
+      }
+
+      const counts = {};
+      data.forEach(entry => {
+        const key = entry.therapy;
+        if (key) {
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      });
+
+      const labels = Object.keys(counts);
+      const values = Object.values(counts);
+
+      const colorMap = {
+        "BSA/AML Program": "#f06292",
+        "Staffing Constraints": "#64b5f6",
+        "Technology Support": "#ffeb3b",
+        "CRA/HMDA": "#4db6ac",
+        "Fair Lending / UDAAP": "#9575cd",
+        "Information Security and Cyber Risk": "#ffa726",
+        "Lack of scalability or Automation": "#81c784",
+        "Other": "#90a4ae"
+      };
+
+      const backgroundColors = labels.map(label => colorMap[label] || "#ccc");
+
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.data.datasets[0].backgroundColor = backgroundColors;
+        chart.update();
+      } else {
+        chart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Therapy Responses",
+              data: values,
+              backgroundColor: backgroundColors
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 20,
+                  padding: 15
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Load initially
+    await loadDataAndUpdateChart();
+
+    // Auto-refresh every 10 seconds
+    setInterval(loadDataAndUpdateChart, 10000);
+  </script>
+</body>
+</html>
