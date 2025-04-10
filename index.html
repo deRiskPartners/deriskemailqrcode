@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Compliance Form – de Risk Partners</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #007bff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    .container {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .hidden {
+      display: none;
+    }
+    label {
+      font-weight: bold;
+      text-align: left;
+      margin: 10px auto 5px;
+      width: 80%;
+      display: block;
+    }
+    input, select, textarea {
+      width: 80%;
+      margin: 0 auto 15px;
+      padding: 8px;
+      border: 2px solid #007bff;
+      border-radius: 5px;
+      font-size: 14px;
+      display: block;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+    .center-logo img {
+      max-width: 120px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="center-logo">
+      <img src="de-risk-partners.jpg" alt="de Risk Partners Logo">
+    </div>
+
+    <!-- Page 1 -->
+    <div id="page1">
+      <h2>Welcome! Please enter your info to begin:</h2>
+      <label for="name">Name:</label>
+      <input type="text" id="name" required>
+
+      <label for="title">Title:</label>
+      <input type="text" id="title" required>
+
+      <label for="organization">Organization:</label>
+      <input type="text" id="organization" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" required>
+
+      <button onclick="goToPage2()">Next</button>
+    </div>
+
+    <!-- Page 2 -->
+    <div id="page2" class="hidden">
+      <form id="compliance-form">
+        <label for="therapy">Compliance Therapy:</label>
+        <select id="therapy" required>
+          <option value="">-- Select --</option>
+          <option>BSA/AML Program</option>
+          <option>Staffing Constraints</option>
+          <option>Technology Support</option>
+          <option>CRA/HMDA</option>
+          <option>Fair Lending / UDAAP</option>
+          <option>Information Security and Cyber Risk</option>
+          <option>Lack of scalability or Automation</option>
+          <option>Other</option>
+        </select>
+
+        <label for="concern">Please describe your Compliance Pain Point:</label>
+        <textarea id="concern" placeholder="Type your concern here..."></textarea>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- Hidden email form to send notification -->
+      <form action="https://formsubmit.co/aaraizasif0110@gmail.com" method="POST" id="email-form" class="hidden">
+        <input type="hidden" name="_subject" value="New Compliance Form Submission">
+        <input type="hidden" name="Name" id="email-name">
+        <input type="hidden" name="Title" id="email-title">
+        <input type="hidden" name="Organization" id="email-org">
+        <input type="hidden" name="Email" id="email-email">
+        <input type="hidden" name="Compliance Therapy" id="email-therapy">
+        <input type="hidden" name="Concern" id="email-concern">
+        <input type="hidden" name="_captcha" value="false">
+      </form>
+    </div>
+  </div>
+
+  <!-- Page 1 to Page 2 Switch -->
+  <script>
+    function goToPage2() {
+      const name = document.getElementById("name").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const org = document.getElementById("organization").value.trim();
+      const email = document.getElementById("email").value.trim();
+
+      if (!name || !title || !org || !email) {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      sessionStorage.setItem("name", name);
+      sessionStorage.setItem("title", title);
+      sessionStorage.setItem("organization", org);
+      sessionStorage.setItem("email", email);
+
+      document.getElementById("page1").classList.add("hidden");
+      document.getElementById("page2").classList.remove("hidden");
+    }
+  </script>
+
+  <!-- Supabase + Email Integration -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://jzxiqailbudeakztkzpc.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6eGlxYWlsYnVkZWFrenRrenBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyMjk0NTcsImV4cCI6MjA1OTgwNTQ1N30.zT5Rst78LcU9A3q29VhQsYV7jiogxcH0m0aUwW7zF2M";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById("compliance-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const data = {
+        name: sessionStorage.getItem("name"),
+        title: sessionStorage.getItem("title"),
+        organization: sessionStorage.getItem("organization"),
+        email: sessionStorage.getItem("email"),
+        therapy: document.getElementById("therapy").value,
+        concern: document.getElementById("concern").value
+      };
+
+      const { error } = await supabase.from("submissions").insert([data]);
+
+      if (error) {
+        alert("Submission failed: " + error.message);
+      } else {
+        // Fill hidden email form
+        document.getElementById("email-name").value = data.name;
+        document.getElementById("email-title").value = data.title;
+        document.getElementById("email-org").value = data.organization;
+        document.getElementById("email-email").value = data.email;
+        document.getElementById("email-therapy").value = data.therapy;
+        document.getElementById("email-concern").value = data.concern;
+
+        // Submit the hidden form to send email
+        document.getElementById("email-form").submit();
+
+        alert("Submitted successfully!");
+        form.reset();
+      }
+    });
+  </script>
+</body>
+</html>
